@@ -66,6 +66,7 @@ public:
 
   ///* Sigma point spreading parameter
   double lambda_;
+  
 
 
   /**
@@ -105,6 +106,7 @@ public:
   
 private:
   void GenerateSigmaPoints(void);
+  void SigmaPointPrediction(MatrixXd Xsig_aug);
 };
 
 #endif /* UKF_H */

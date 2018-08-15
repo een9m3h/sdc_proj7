@@ -60,12 +60,12 @@ UKF::UKF() {
   Hint: one or more values initialized above might be wildly off...
   */
   
-  /*is_initialized_ = false;
+  is_initialized_ = false;
   
   ///* predicted sigma points matrix
-  MatrixXd Xsig_pred_;
+  Xsig_pred_ = MatrixXd(STATE_SIZE, 2 * AUG_SIZE + 1);
   
-  ///* Weights of sigma points
+  /*///* Weights of sigma points
   VectorXd weights_;
 
   ///* State dimension
@@ -178,4 +178,57 @@ void UKF::GenerateSigmaPoints(void){
 		Xsig.col(i+1)     = x_ + sqrt(lambda+AUG_SIZE) * A.col(i);
 		Xsig.col(i+1+AUG_SIZE) = x_ - sqrt(lambda+AUG_SIZE) * A.col(i);
 	}
+}
+
+void UKF::SigmaPointPrediction(MatrixXd Xsig_aug) {
+
+	double delta_t = 0.1; //time diff in sec
+
+	//predict sigma points
+	for (int i = 0; i< 2*AUG_SIZE+1; i++)
+	{
+		//extract values for better readability
+		double p_x 		= Xsig_aug(0,i);
+		double p_y 		= Xsig_aug(1,i);
+		double v 		= Xsig_aug(2,i);
+		double yaw 		= Xsig_aug(3,i);
+		double yawd 	= Xsig_aug(4,i);
+		double nu_a 	= Xsig_aug(5,i);
+		double nu_yawdd = Xsig_aug(6,i);
+
+		//predicted state values
+		double px_p, py_p;
+
+		//avoid division by zero
+		if (fabs(yawd) > 0.001) {
+			px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+			py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
+		}
+		else {
+			px_p = p_x + v*delta_t*cos(yaw);
+			py_p = p_y + v*delta_t*sin(yaw);
+		}
+
+		double v_p 		= v;
+		double yaw_p 	= yaw + yawd*delta_t;
+		double yawd_p 	= yawd;
+
+		//add noise
+		px_p 	= px_p + 0.5*nu_a*delta_t*delta_t * cos(yaw);
+		py_p 	= py_p + 0.5*nu_a*delta_t*delta_t * sin(yaw);
+		v_p 	= v_p + nu_a*delta_t;
+
+		yaw_p 	= yaw_p + 0.5*nu_yawdd*delta_t*delta_t;
+		yawd_p 	= yawd_p + nu_yawdd*delta_t;
+
+		//write predicted sigma point into right column
+		Xsig_pred_(0,i) = px_p;
+		Xsig_pred_(1,i) = py_p;
+		Xsig_pred_(2,i) = v_p;
+		Xsig_pred_(3,i) = yaw_p;
+		Xsig_pred_(4,i) = yawd_p;
+	}
+
+	//print result
+	std::cout << "Xsig_pred = " << std::endl << Xsig_pred_ << std::endl;	
 }
