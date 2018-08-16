@@ -72,10 +72,10 @@ UKF::UKF() {
   int n_x_;
 
   ///* Augmented state dimension
-  int n_aug_;
+  int n_aug_;*/
 
   ///* Sigma point spreading parameter
-  double lambda_;*/
+  lambda_ = 3-AUG_SIZE;
 }
 
 UKF::~UKF() {}
@@ -148,9 +148,6 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
  * Generates sigma points based on state mean and cov mtx.
  */
 void UKF::GenerateSigmaPoints(void){
-	//define spreading parameter
-	double lambda = 3 - AUG_SIZE;
-
 	//create augmented mean vector
 	VectorXd x_aug = VectorXd(AUG_SIZE);
 
@@ -175,8 +172,8 @@ void UKF::GenerateSigmaPoints(void){
 	//set remaining sigma points
 	for (int i = 0; i < AUG_SIZE; i++)
 	{
-		Xsig.col(i+1)     = x_ + sqrt(lambda+AUG_SIZE) * A.col(i);
-		Xsig.col(i+1+AUG_SIZE) = x_ - sqrt(lambda+AUG_SIZE) * A.col(i);
+		Xsig.col(i+1)     = x_ + sqrt(lambda_+AUG_SIZE) * A.col(i);
+		Xsig.col(i+1+AUG_SIZE) = x_ - sqrt(lambda_+AUG_SIZE) * A.col(i);
 	}
 }
 
@@ -231,4 +228,63 @@ void UKF::SigmaPointPrediction(MatrixXd Xsig_aug) {
 
 	//print result
 	std::cout << "Xsig_pred = " << std::endl << Xsig_pred_ << std::endl;	
+}
+
+void UKF::PredictMeanAndCovariance(void) {
+
+	//create vector for weights
+	VectorXd weights = VectorXd(2*AUG_SIZE+1);
+
+	//create vector for predicted state
+	VectorXd x = VectorXd(STATE_SIZE);
+
+	//create covariance matrix for prediction
+	MatrixXd P = MatrixXd(STATE_SIZE, STATE_SIZE);
+
+
+	/*******************************************************************************
+	* Student part begin
+	******************************************************************************/
+
+	// set weights
+	double weight_0 = lambda_/(lambda_+AUG_SIZE);
+	weights(0) = weight_0;
+	for (int i=1; i<2*AUG_SIZE+1; i++) {  //2n+1 weights
+	double weight = 0.5/(AUG_SIZE+lambda_);
+	weights(i) = weight;
+	}
+
+	//predicted state mean
+	x.fill(0.0);
+	for (int i = 0; i < 2 * AUG_SIZE + 1; i++) {  //iterate over sigma points
+		x = x+ weights(i) * Xsig_pred_.col(i);
+	}
+
+	//predicted state covariance matrix
+	P.fill(0.0);
+	for (int i = 0; i < 2 * AUG_SIZE + 1; i++) {  //iterate over sigma points
+
+		// state difference
+		VectorXd x_diff = Xsig_pred_.col(i) - x;
+		//angle normalization
+		while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+		while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+
+		P = P + weights(i) * x_diff * x_diff.transpose() ;
+	}
+
+
+	/*******************************************************************************
+	* Student part end
+	******************************************************************************/
+
+	//print result
+	std::cout << "Predicted state" << std::endl;
+	std::cout << x << std::endl;
+	std::cout << "Predicted covariance matrix" << std::endl;
+	std::cout << P << std::endl;
+
+	//write result
+	x_ = x;
+	P_ = P;
 }

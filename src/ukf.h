@@ -107,6 +107,7 @@ public:
 private:
   void GenerateSigmaPoints(void);
   void SigmaPointPrediction(MatrixXd Xsig_aug);
+  void PredictMeanAndCovariance(void);
 };
 
 #endif /* UKF_H */
