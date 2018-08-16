@@ -36,6 +36,9 @@ public:
 
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
+  
+  ///*create matrix for sigma points in measurement space
+  MatrixXd Zsig_;
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -115,6 +118,7 @@ private:
   void SigmaPointPrediction(MatrixXd Xsig_aug);
   void PredictMeanAndCovariance(void);
   void PredictRadarMeasurement(void);
+  void UpdateState(VectorXd z);
 };
 
 #endif /* UKF_H */
