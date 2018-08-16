@@ -27,6 +27,12 @@ public:
 
   ///* state covariance matrix
   MatrixXd P_;
+  
+  ///* mean predicted measurement
+  VectorXd z_;
+
+  ///* innovation covariance matrix
+  MatrixXd S_;
 
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
@@ -108,6 +114,7 @@ private:
   void GenerateSigmaPoints(void);
   void SigmaPointPrediction(MatrixXd Xsig_aug);
   void PredictMeanAndCovariance(void);
+  void PredictRadarMeasurement(void);
 };
 
 #endif /* UKF_H */
