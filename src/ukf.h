@@ -39,9 +39,17 @@ public:
   
   ///*create matrix for sigma points in measurement space
   MatrixXd Zsig_;
+  
+  ///* Lidar noise covariance matrix
+  MatrixXd R_laser_;
+  
+  ///* Radar noise covariance matrix
+  MatrixXd R_radar_;
+  
+  double delta_t_;
 
   ///* time when the state is true, in us
-  long long time_us_;
+  long long previous_timestamp_;
 
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -97,9 +105,9 @@ public:
   /**
    * Prediction Predicts sigma points, the state, and the state covariance
    * matrix
-   * @param delta_t Time between k and k+1 in s
+   * @param meas_package The measurement at k+1
    */
-  void Prediction(double delta_t);
+  void Prediction(MeasurementPackage meas_package);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
@@ -114,11 +122,12 @@ public:
   void UpdateRadar(MeasurementPackage meas_package);
   
 private:
-  void GenerateSigmaPoints(void);
+  MatrixXd GenerateSigmaPoints(void);
   void SigmaPointPrediction(MatrixXd Xsig_aug);
   void PredictMeanAndCovariance(void);
   void PredictRadarMeasurement(void);
   void UpdateState(VectorXd z);
+  float RangeAngle(float phi);
 };
 
 #endif /* UKF_H */

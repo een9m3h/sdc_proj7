@@ -31,7 +31,9 @@ int main()
   uWS::Hub h;
 
   // Create a Kalman Filter instance
+  std::cout << "Create a Kalman Filter instance" << std::endl;
   UKF ukf;
+  std::cout << "Kalman Filter instance created" << std::endl;
 
   // used to compute the RMSE later
   Tools tools;
