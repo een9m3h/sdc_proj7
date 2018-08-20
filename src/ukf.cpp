@@ -22,7 +22,7 @@ UKF::UKF() {
   std::cout << "enter UKF constructor" << std::endl;
 	
   // if this is false, laser measurements will be ignored (except during init)
-  use_laser_ = false;
+  use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
@@ -34,11 +34,16 @@ UKF::UKF() {
 
   // initial covariance matrix
   P_ = MatrixXd(STATE_SIZE, STATE_SIZE);
-  P_ << 1,0,0,0,0,
-		0,1,0,0,0,
+  P_ << 0.18,0,0,0,0,
+		0,0.18,0,0,0,
 		0,0,1,0,0,
 		0,0,0,1,0,
 		0,0,0,0,1;
+		
+  ///* Laser measurement matrix
+  H_ = MatrixXd(2, STATE_SIZE);
+  H_ << 1,0,0,0,0,
+		0,1,0,0,0;
   
   // mean predicted measurement
   z_ = VectorXd(RADAR_MEAS_DIM);
@@ -51,10 +56,10 @@ UKF::UKF() {
   std::cout << "After vecs" << std::endl;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 1;
+  std_a_ = 3.0;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.5;
+  std_yawdd_ = 1.0;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -153,7 +158,7 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
 		  MMSE_ = MatrixXd(3,3);
 		  MMSE_ = R_radar_;
 		  MMSE_(0,0) += 1;MMSE_(1,1) += 1;MMSE_(2,2) += 1;
-		  z_est_ = MMSE_.inverse()*measurement_pack.raw_measurements_;
+		  z_est_ = measurement_pack.raw_measurements_;
 		  
 		  x_ << z_est_[0]*cos(z_est_[1]),
 					z_est_[0]*sin(z_est_[1]),
@@ -166,7 +171,7 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
 			MMSE_ = MatrixXd(2,2);
 			MMSE_ = R_laser_;
 			MMSE_(0,0) += 1;MMSE_(1,1) += 1;
-			z_est_ = MMSE_.inverse()*measurement_pack.raw_measurements_;
+			z_est_ = measurement_pack.raw_measurements_;
 		  
 			x_ << 	z_est_[0],
 						z_est_[1],0,0,0;
@@ -188,7 +193,7 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
 			UpdateRadar(measurement_pack);
 		} else if(use_laser_) {
 			// Laser updates
-			//UpdateLidar(measurement_pack);
+			UpdateLidar(measurement_pack);
 		}
 	}
 	std::cout << "exit ProcessMeasurement" << std::endl;
@@ -231,6 +236,31 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
+  
+  std::cout << "enter UpdateLidar" << std::endl;
+  
+    //MatrixXd H_ = H_laser_;
+	MatrixXd R_ = R_laser_;
+	VectorXd y_;
+	MatrixXd K_lidar_,S_lidar_, I_lidar_;
+	VectorXd z = meas_package.raw_measurements_;
+	I_lidar_ = MatrixXd(STATE_SIZE, STATE_SIZE);
+	I_lidar_ << 1,0,0,0,0,
+		0,1,0,0,0,
+		0,0,1,0,0,
+		0,0,0,1,0,
+		0,0,0,0,1;
+	
+	std::cout << "bp2" << std::endl;
+	
+	// KF Measurement update step
+	y_ = z - H_*x_;
+	S_lidar_ = H_*P_*H_.transpose() + R_;
+	K_lidar_ = P_*H_.transpose()*S_lidar_.inverse();
+	x_ = x_ + K_lidar_*y_;
+	P_ = (I_lidar_-K_lidar_*H_)*P_;
+	
+	std::cout << "exit UpdateLidar" << std::endl;
 }
 
 /**

@@ -33,6 +33,9 @@ public:
 
   ///* innovation covariance matrix
   MatrixXd S_;
+  
+  ///* Laser measurement matrix
+  MatrixXd H_;
 
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
